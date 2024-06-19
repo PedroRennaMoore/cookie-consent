@@ -4,7 +4,8 @@
         const script = document.currentScript || document.querySelector('script[src*="cookie-consent.js"]');
         return {
             gtmId: script ? script.getAttribute('data-gtm-id') : null,
-            gaId: script ? script.getAttribute('data-ga-id') : null
+            gaId: script ? script.getAttribute('data-ga-id') : null,
+            gaIntegrated: script ? script.getAttribute('data-ga-integrated') === 'true' : false
         };
     }
 
@@ -73,6 +74,7 @@
         document.getElementById('allow-all').addEventListener('click', function() {
             setCookieConsent(true, true, true, true);
             updateConsentSettings(true, true, true, true);
+            loadGTM();
             loadAnalytics();
             consentBanner.style.display = 'none';
         });
@@ -83,15 +85,18 @@
             const marketingConsent = document.getElementById('marketing-cookies').checked;
             setCookieConsent(true, preferenceConsent, statisticsConsent, marketingConsent);
             updateConsentSettings(true, preferenceConsent, statisticsConsent, marketingConsent);
-            if (statisticsConsent) {
-                loadAnalytics();
+            if (statisticsConsent || marketingConsent) {
+                loadGTM();
+                if (!params.gaIntegrated && statisticsConsent) {
+                    loadAnalytics();
+                }
             }
             consentBanner.style.display = 'none';
         });
 
         document.getElementById('deny-all').addEventListener('click', function() {
-            setCookieConsent(true, false, false, false);
-            updateConsentSettings(true, false, false, false);
+            setCookieConsent(false, false, false, false);
+            updateConsentSettings(false, false, false, false);
             consentBanner.style.display = 'none';
         });
     }
@@ -118,15 +123,28 @@
         }
     }
 
-    // Função para carregar GTM e GA se o usuário consentir
-    function loadAnalytics() {
+    // Função para carregar GTM
+    function loadGTM() {
         const params = getScriptParams();
         if (params.gtmId) {
             // Carregar GTM
-            const gtmScript = document.createElement('script');
-            gtmScript.src = `https://www.googletagmanager.com/gtm.js?id=${params.gtmId}`;
-            document.head.appendChild(gtmScript);
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer', params.gtmId);
+
+            // Carregar GTM noscript
+            const noscript = document.createElement('noscript');
+            noscript.innerHTML = `<iframe src="https://www.googletagmanager.com/ns.html?id=${params.gtmId}"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>`;
+            document.body.appendChild(noscript);
         }
+    }
+
+    // Função para carregar GA
+    function loadAnalytics() {
+        const params = getScriptParams();
         if (params.gaId) {
             // Carregar GA
             window.dataLayer = window.dataLayer || [];
@@ -171,8 +189,11 @@
         const { necessary, preference, statistics, marketing } = checkConsent();
         updateConsentSettings(necessary, preference, statistics, marketing);
         if (necessary) {
-            if (statistics) {
-                loadAnalytics();
+            if (statistics || marketing) {
+                loadGTM();
+                if (!params.gaIntegrated && statistics) {
+                    loadAnalytics();
+                }
             }
         } else {
             showCookieConsentBanner();
