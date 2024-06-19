@@ -180,5 +180,9 @@
     }
 
     // Inicia o script após o carregamento do DOM
-    document.addEventListener('DOMContentLoaded', initCookieConsent);
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializa com todos os consentimentos negados
+        updateConsentSettings(false, false, false, false);
+        initCookieConsent();
+    });
 })();
