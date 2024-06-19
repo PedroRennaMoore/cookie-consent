@@ -1,11 +1,18 @@
 (function() {
     // Função para pegar os dados do script
     function getScriptParams() {
-        const script = document.currentScript || document.querySelector('script[src*="cookie.js"]');
+        const script = document.currentScript || document.querySelector('script[src*="cookie-consent.js"]');
         return {
             gtmId: script ? script.getAttribute('data-gtm-id') : null,
             gaId: script ? script.getAttribute('data-ga-id') : null
         };
+    }
+
+    // Função para aplicar estilos ao banner
+    function applyStyles(element, styles) {
+        for (let property in styles) {
+            element.style[property] = styles[property];
+        }
     }
 
     // Função para exibir o banner de consentimento de cookies
@@ -47,6 +54,21 @@
             </div>
         `;
         document.body.appendChild(consentBanner);
+
+        // Aplicando estilos ao banner
+        applyStyles(consentBanner, {
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'white',
+            zIndex: '10000',
+            padding: '20px',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+            borderRadius: '8px',
+            maxWidth: '90%',
+            boxSizing: 'border-box'
+        });
 
         document.getElementById('allow-all').addEventListener('click', function() {
             setCookieConsent(true, true, true, true);
@@ -146,7 +168,7 @@
 
     // Inicializa o consentimento de cookies
     function initCookieConsent() {
-        const { necessary, preference, statistics, marketing  } = checkConsent();
+        const { necessary, preference, statistics, marketing } = checkConsent();
         updateConsentSettings(necessary, preference, statistics, marketing);
         if (necessary) {
             if (statistics) {
