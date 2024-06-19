@@ -204,6 +204,8 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Inicializa com todos os consentimentos negados
         updateConsentSettings(false, false, false, false);
+        loadGTM();
+        loadAnalytics();
         initCookieConsent();
     });
 })();
